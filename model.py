@@ -27,8 +27,21 @@ class ThermoNet(nn.Module):
             self.dense1 = DenseBlock(2,in_channels,hidden_channels)
             self.dense2 = DenseBlock(2,self.dense1.out_channels,hidden_channels)
             self.dense3 = DenseBlock(2,self.dense2.out_channels,hidden_channels)
-            self.dense4 = DenseBlock(2,self.dense3.out_channels,out_channels)
-            self.lin = nn.Linear(self.dense4.out_channels,out_channels)
+            self.dense4 = DenseBlock(2,self.dense3.out_channels,hidden_channels)
+            self.dense5 = DenseBlock(2,self.dense4.out_channels,hidden_channels)
+            # self.dense6 = DenseBlock(2,self.dense5.out_channels,out_channels)
+            # self.dense7 = DenseBlock(2, self.dense6.out_channels, out_channels)
+            # self.dense8 = DenseBlock(2, self.dense7.out_channels, out_channels)
+            # self.dense9 = DenseBlock(2, self.dense8.out_channels, out_channels)
+            self.lin = nn.Sequential()
+            outdense_channels = self.dense5.out_channels
+            i = 0
+            while outdense_channels//2>out_channels:
+                self.lin.add_module('linear'+str(i),nn.Linear(outdense_channels,outdense_channels//2))
+                outdense_channels//=2
+                i+=1
+            else:
+                self.lin.add_module('linear'+str(i),nn.Linear(outdense_channels,out_channels))
         self.dropout = nn.Dropout(0.2)
     def forward(self, x):
         if self.mode == 'linear':
@@ -44,6 +57,12 @@ class ThermoNet(nn.Module):
             x = self.dense2(x)
             x = self.dense3(x)
             x = self.dense4(x)
+            x = self.dense5(x)
+            # x = self.dense6(x)
+            # x = self.dense7(x)
+            # x = self.dense8(x)
+            # x = self.dense9(x)
+
             x = self.lin(x.squeeze())
         return x
 class DenseBlock(nn.Module):
