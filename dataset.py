@@ -1,7 +1,5 @@
 import gzip
 import torch.utils.data as data
-import lmdb
-import msgpack_numpy
 import os
 import os.path as osp
 import random
@@ -51,4 +49,4 @@ class THERMO(data.Dataset):
 if __name__ == '__main__':
     dataset = THERMO('data/0.022000625/',False)
     input,output = random.choice(dataset)
-    print(input,output)
+    print(input.shape,output)
