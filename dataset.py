@@ -14,8 +14,8 @@ class THERMO(data.Dataset):
         self._cache = os.path.join(self.root, "thermo_cache.npy")
         if not os.path.isfile(self._cache):
             sumarray = []
-            for file in os.listdir(self.root):
-                if file=="thermo_cache":
+            for file in sorted(os.listdir(self.root)):
+                if file=="thermo_cache.npy":
                     continue
                 print("processing",file)
                 nparray = np.array([])
