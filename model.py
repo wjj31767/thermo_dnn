@@ -84,7 +84,7 @@ class DenseBlock(nn.Module):
 def conv_block(in_channels, out_channels):
     blk = nn.Sequential(nn.BatchNorm1d(in_channels),
                         nn.ReLU(),
-                        nn.Conv1d(in_channels, out_channels,kernel_size=3,padding=1))
+                        nn.Conv1d(in_channels, out_channels,kernel_size=1))
     return blk
 
 
@@ -99,3 +99,7 @@ if __name__ == '__main__':
     X = torch.rand(4, 18,1)
     Y = model(X)
     print(Y.shape)
+    X = torch.rand(4, 18,1)
+    print(X[0,0,0])
+    net = nn.Conv1d(18,16,kernel_size=1)
+    print(net(X).shape)
