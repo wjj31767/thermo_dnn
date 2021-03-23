@@ -21,13 +21,13 @@ else:
     for params in net.parameters():
         init.normal_(params, mean=0, std=0.02)
     global_train_l = sys.maxsize
-train_iter = Data.DataLoader(THERMO('data/0.022000625/',False), 512, shuffle=True)
-
+train_iter = Data.DataLoader(THERMO('data/',False), 512, shuffle=True)
+print(global_train_l)
 
 loss =nn.MSELoss()
 
 
-optimizer = optim.Adam(net.parameters(), lr=0.001)
+optimizer = optim.Adam(net.parameters(), lr=0.0001)
 # scheduler = ReduceLROnPlateau(optimizer,patience=1,verbose=True,factor=0.5)
 # scheduler = StepLR(optimizer,step_size=100,gamma=0.4,verbose=True)
 def evaluate_accuracy(data_iter, net):

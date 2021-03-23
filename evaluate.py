@@ -19,7 +19,7 @@ net = ThermoNet(18,64,16,'dense')
 checkpoint = torch.load("model.pth")
 net.load_state_dict(checkpoint['model_state_dict'])
 net.eval()
-data = THERMO('data/0.022000625/',False)
+data = THERMO('data/',False)
 train_iter = Data.DataLoader(data, 400, shuffle=False)
 input = []
 oinput = []

@@ -10,19 +10,57 @@ class THERMO(data.Dataset):
         self.root = root
         self.use_norm=use_norm
         self._cache = os.path.join(self.root, "thermo_cache.npy")
+        self.dict = {"CH":0,
+                    "CH2":1,
+                    "CH2O":2,
+                    "CH3":3,
+                    "CH4":4,
+                    "CO":5,
+                    "CO2":6,
+                    "H":7,
+                    "H2":8,
+                    "H2O":9,
+                    "H2O2":10,
+                    "HCO":11,
+                    "HO2":12,
+                    "N2":13,
+                    "O":14,
+                    "O2":15,
+                    "OH":16,
+                    "T":17,
+                    "RR.CH":18,
+                    "RR.CH2":19,
+                    "RR.CH2O":20,
+                    "RR.CH3":21,
+                    "RR.CH4":22,
+                    "RR.CO":23,
+                    "RR.CO2":24,
+                    "RR.H":25,
+                    "RR.H2":26,
+                    "RR.H2O":27,
+                    "RR.H2O2":28,
+                    "RR.HCO":29,
+                    "RR.HO2":30,
+                    "RR.O":31,
+                    "RR.O2":32,
+                    "RR.OH":33}
         if not os.path.isfile(self._cache):
             sumarray = []
-            for file in sorted(os.listdir(self.root)):
-                if file=="thermo_cache.npy":
+            for sublist in sorted(os.listdir(self.root)):
+                subarray = [np.zeros(4000).reshape(-1, 1) for _ in range(34)]
+                if sublist=="thermo_cache.npy":
                     continue
-                print("processing",file)
-                nparray = np.array([])
-                with gzip.open(osp.join(self.root,file),'rb') as f:
-                    for n,line in enumerate(f):
-                        if 23 <= n <= 320022:
-                            nparray = np.append(nparray,float(line[:-1]))
-                sumarray.append(nparray.reshape(-1,1))
-            sumarray = np.hstack(sumarray)
+                print("processing",sublist)
+                for file in os.listdir(os.path.join(self.root,sublist)):
+                    nparray = np.array([])
+                    with open(osp.join(self.root,sublist,file),'rb') as f:
+                        for n,line in enumerate(f):
+                            if 23 <= n <= 4022:
+                                nparray = np.append(nparray,float(line[:-1]))
+                    subarray[self.dict[file]] = nparray.reshape(-1,1)
+                subarray = np.hstack(subarray)
+                sumarray.append(subarray)
+            sumarray = np.vstack(sumarray)
             np.save(self._cache,sumarray)
 
 
@@ -40,13 +78,13 @@ class THERMO(data.Dataset):
                 self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
                 self._lmdb_file = (self._lmdb_file - self.summean) / self.sumstd
         slice = self._lmdb_file[index,:]
-        input, output = np.append(slice[:17],slice[-1]),slice[17:-1]
+        input, output = slice[:18],slice[18:]
         input = torch.tensor(input,dtype=torch.float32)
         output = torch.tensor(output,dtype=torch.float32)
         return input.unsqueeze(-1), output
     def __len__(self):
-        return 320000
+        return 40000
 if __name__ == '__main__':
-    dataset = THERMO('data/0.022000625/',False)
+    dataset = THERMO('data/',False)
     input,output = random.choice(dataset)
-    print(input.shape,output)
+    print(input.shape,output,input)
