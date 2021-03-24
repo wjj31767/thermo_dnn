@@ -37,7 +37,7 @@ def evaluate_accuracy(data_iter, net):
         n += y.shape[0]
     return acc_sum / n
 
-num_epochs = 200
+num_epochs = 500
 
 for epoch in range(num_epochs):
     train_l_sum , n = 0.0, 0
