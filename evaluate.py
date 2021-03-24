@@ -1,3 +1,4 @@
+
 from torch.nn import init
 from model import ThermoNet
 import torch
@@ -14,6 +15,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 from torchvision import transforms
 from PIL import Image
+print(torch.__version__)
 save_CPP = True
 net = ThermoNet(18,64,16,'dense')
 checkpoint = torch.load("model.pth")
