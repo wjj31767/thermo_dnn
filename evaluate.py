@@ -16,12 +16,12 @@ from tqdm import tqdm
 from torchvision import transforms
 from PIL import Image
 print(torch.__version__)
-save_CPP = True
+save_CPP = False
 net = ThermoNet(18,64,16,'dense')
 checkpoint = torch.load("model.pth")
 net.load_state_dict(checkpoint['model_state_dict'])
 net.eval()
-data = THERMO('data/',False)
+data = THERMO('data/',True)
 train_iter = Data.DataLoader(data, 400, shuffle=False)
 input = []
 oinput = []

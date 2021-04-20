@@ -32,7 +32,7 @@ class THERMO(data.Dataset):
                     "RR.CH2":19,
                     "RR.CH2O":20,
                     "RR.CH3":21,
-                    "RR.CH4":22,
+                    "RR.C`H4":22,
                     "RR.CO":23,
                     "RR.CO2":24,
                     "RR.H":25,
@@ -49,6 +49,7 @@ class THERMO(data.Dataset):
             for sublist in sorted(os.listdir(self.root)):
                 subarray = [np.zeros(4000).reshape(-1, 1) for _ in range(34)]
                 if sublist=="thermo_cache.npy":
+                # if sublist not in ['0.5','0.45']:
                     continue
                 print("processing",sublist)
                 for file in os.listdir(os.path.join(self.root,sublist)):
@@ -66,25 +67,32 @@ class THERMO(data.Dataset):
 
 
         self._lmdb_file = np.load(self._cache)
+        self._lmdb_file = np.unique(self._lmdb_file,axis=0)
+        print(self._lmdb_file.shape)
         if self.use_norm:
             self.summean = self._lmdb_file.mean(axis=0, keepdims=True)
             self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
-            self._lmdb_file = (self._lmdb_file - self.summean) / self.sumstd
+            self.mask = (self.sumstd!=0.).squeeze()
+            self._lmdb_file[:,self.mask] = (self._lmdb_file[:,self.mask] - self.summean[:,self.mask]) / self.sumstd[:,self.mask]
+
     def __getitem__(self, index):
         if self._lmdb_file is None:
             self._lmdb_file = np.load(self._cache)
             if self.use_norm:
                 self.summean = self._lmdb_file.mean(axis=0, keepdims=True)
                 self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
-                self._lmdb_file = (self._lmdb_file - self.summean) / self.sumstd
+                mask = (self.sumstd != 0.).squeeze()
+                self._lmdb_file[:, mask] = (self._lmdb_file[:, mask] - self.summean[:, mask]) / self.sumstd[:, mask]
+
         slice = self._lmdb_file[index,:]
         input, output = slice[:18],slice[18:]
         input = torch.tensor(input,dtype=torch.float32)
         output = torch.tensor(output,dtype=torch.float32)
         return input.unsqueeze(-1), output
     def __len__(self):
-        return 40000
+        return self._lmdb_file.shape[0]
 if __name__ == '__main__':
-    dataset = THERMO('data/',False)
+    dataset = THERMO('data/',True)
     input,output = random.choice(dataset)
     print(input.shape,output,input)
+    print(len(dataset))

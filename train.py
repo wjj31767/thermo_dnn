@@ -12,7 +12,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau,StepLR
 import math
 import os
 import sys
-net = ThermoNet(18,64,16,'dense').cuda()
+net = ThermoNet(18,64,16,'linear').cuda()
 if os.path.exists('model.pth'):
     checkpoint = torch.load("model.pth")
     net.load_state_dict(checkpoint['model_state_dict'])
@@ -27,7 +27,7 @@ print(global_train_l)
 loss =nn.MSELoss()
 
 
-optimizer = optim.Adam(net.parameters(), lr=0.0001)
+optimizer = optim.Adam(net.parameters(), lr=0.00001)
 # scheduler = ReduceLROnPlateau(optimizer,patience=1,verbose=True,factor=0.5)
 # scheduler = StepLR(optimizer,step_size=100,gamma=0.4,verbose=True)
 def evaluate_accuracy(data_iter, net):
@@ -37,7 +37,7 @@ def evaluate_accuracy(data_iter, net):
         n += y.shape[0]
     return acc_sum / n
 
-num_epochs = 500
+num_epochs = 5000
 
 for epoch in range(num_epochs):
     train_l_sum , n = 0.0, 0
