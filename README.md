@@ -41,5 +41,11 @@ did some changes for merge openfoam and pytorch
 The dataset for pytorch is getting from normal counterFlowFlame2D's results.
 
 1. Model part consists of linear neurons now. Plan to increase number of neurons to see if it's fitter or not.
+
 2. rectification of dataset or not: Current results shows rectification of dataset make the fitting work worse.
+
 3. Why model is 18 inputs and 16 outputs? Future plan is train based on 18 inputs and 16 outputs dataset.
+
+4. testData.csv is for testing, pandadata.py is for testing curve, something like following:
+
+   ![image-20210421125517058](README.assets/image-20210421125517058.png)
