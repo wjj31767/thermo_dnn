@@ -16,8 +16,8 @@ from tqdm import tqdm
 from torchvision import transforms
 from PIL import Image
 print(torch.__version__)
-save_CPP = False
-net = ThermoNet(18,64,16,'dense')
+save_CPP = True
+net = ThermoNet(18,64,16,'linear')
 checkpoint = torch.load("model.pth")
 net.load_state_dict(checkpoint['model_state_dict'])
 net.eval()
