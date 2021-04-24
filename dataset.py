@@ -32,7 +32,7 @@ class THERMO(data.Dataset):
                     "RR.CH2":19,
                     "RR.CH2O":20,
                     "RR.CH3":21,
-                    "RR.C`H4":22,
+                    "RR.CH4":22,
                     "RR.CO":23,
                     "RR.CO2":24,
                     "RR.H":25,
