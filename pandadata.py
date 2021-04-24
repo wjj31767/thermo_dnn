@@ -33,6 +33,8 @@ N2 = []
 T = []
 RRCH4 = []
 RRH2O = []
+RRO2 = []
+RRCO2 = []
 Points0 = []
 RRCH4_predict = []
 RRH2O_predict = []
@@ -45,6 +47,8 @@ for i in range(testdata.shape[0]):
     T.append(testdata['T'][i])
     RRCH4.append(testdata['RR.CH4'][i])
     RRH2O.append(testdata['RR.H2O'][i])
+    # RRO2.append(testdata['RR.O2'][i])
+    # RRCO2.append(testdata['RR.CO2'][i])
     Points0.append(testdata['Points:0'][i])
 
 input = torch.zeros((testdata.shape[0],18,1),dtype=torch.float64)
@@ -82,28 +86,55 @@ output = net(input)
 #              "O2": 15,
 #              "OH": 16,
 #              "T": 17,
-#                     "RR.CH":18,
-#                     "RR.CH2":19,
-#                     "RR.CH2O":20,
-#                     "RR.CH3":21,
-#                     "RR.CH4":22,
-#                     "RR.CO":23,
-#                     "RR.CO2":24,
-#                     "RR.H":25,
-#                     "RR.H2":26,
-#                     "RR.H2O":27,
-#                     "RR.H2O2":28,
-#                     "RR.HCO":29,
-#                     "RR.HO2":30,
-#                     "RR.O":31,
-#                     "RR.O2":32,
-#                     "RR.OH":33}
+#                     "RR.CH":0,
+#                     "RR.CH2":1,
+#                     "RR.CH2O":2,
+#                     "RR.CH3":3,
+#                     "RR.CH4":4,
+#                     "RR.CO":5,
+#                     "RR.CO2":6,
+#                     "RR.H":7,
+#                     "RR.H2":8,
+#                     "RR.H2O":9,
+#                     "RR.H2O2":10,
+#                     "RR.HCO":11,
+#                     "RR.HO2":12,
+#                     "RR.O":13,
+#                     "RR.O2":14,
+#                     "RR.OH":15}
 
 plt.plot(Points0,RRCH4,label='original')
 if norm:
     plt.plot(Points0,output[:,4].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
 else:
     plt.plot(Points0,output[:,4].detach().numpy(),label='predict')
-
+plt.title("CH4")
 plt.legend()
 plt.show()
+
+# plt.plot(Points0,RRCO2,label='original')
+# if norm:
+#     plt.plot(Points0,output[:,6].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
+# else:
+#     plt.plot(Points0,output[:,6].detach().numpy(),label='predict')
+# plt.title("CO2")
+# plt.legend()
+# plt.show()
+
+plt.plot(Points0,RRH2O,label='original')
+if norm:
+    plt.plot(Points0,output[:,9].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
+else:
+    plt.plot(Points0,output[:,9].detach().numpy(),label='predict')
+plt.title("H2O")
+plt.legend()
+plt.show()
+
+# plt.plot(Points0,RRO2,label='original')
+# if norm:
+#     plt.plot(Points0,output[:,14].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
+# else:
+#     plt.plot(Points0,output[:,14].detach().numpy(),label='predict')
+# plt.title("O2")
+# plt.legend()
+# plt.show()
