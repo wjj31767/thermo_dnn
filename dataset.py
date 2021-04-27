@@ -48,8 +48,8 @@ class THERMO(data.Dataset):
             sumarray = []
             for sublist in sorted(os.listdir(self.root)):
                 subarray = [np.zeros(4000).reshape(-1, 1) for _ in range(34)]
-                if sublist=="thermo_cache.npy":
-                # if sublist not in ['0.5','0.45']:
+                # if sublist=="thermo_cache.npy":
+                if sublist not in ['0.5']:
                     continue
                 print("processing",sublist)
                 for file in os.listdir(os.path.join(self.root,sublist)):
