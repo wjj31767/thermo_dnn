@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 n += y.shape[0]
             return acc_sum / n
 
-        num_epochs = 50000
+        num_epochs = 500000
 
         for epoch in range(num_epochs):
             train_l_sum , n = 0.0, 0
