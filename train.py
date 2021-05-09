@@ -114,7 +114,7 @@ if __name__ == '__main__':
             #     'loss': train_l_sum,
             #     'optimizer': optimizer.state_dict(),
             #     }, 'model.pth')
-            # global_train_l = train_l_sum
+            global_train_l = train_l_sum
         # scheduler.step()
         # print('epoch %d, loss %f'
         #       % (epoch + 1, train_l_sum))
