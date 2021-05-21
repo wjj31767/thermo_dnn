@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     max_ckpt_save_num = 10
     net = ThermoNet(18,64,16,'linear').cuda()
-    optimizer = optim.Adam(net.parameters(), lr=0.000001)
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
     ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
     if len(ckpt_list) > 0:
         ckpt_list.sort(key=os.path.getmtime)
@@ -62,9 +62,10 @@ if __name__ == '__main__':
         for params in net.parameters():
             init.normal_(params, mean=0, std=0.05)
         global_train_l = sys.maxsize
-    train_iter = Data.DataLoader(THERMO('data/',False), 3995, shuffle=True,pin_memory=True)
+    train_iter = Data.DataLoader(THERMO('data/',True), 3995, shuffle=True,pin_memory=True)
     print(global_train_l)
     for param_group in optimizer.param_groups:
+        param_group['lr']=0.000001
         print("learning rate",param_group['lr'])
     loss =nn.MSELoss()
 
@@ -114,9 +115,8 @@ if __name__ == '__main__':
             #     'loss': train_l_sum,
             #     'optimizer': optimizer.state_dict(),
             #     }, 'model.pth')
-            # global_train_l = train_l_sum
+            global_train_l = train_l_sum
         # scheduler.step()
-        # print('epoch %d, loss %f'
+        #print('epoch %d, loss %f'
         #       % (epoch + 1, train_l_sum))
-
 
