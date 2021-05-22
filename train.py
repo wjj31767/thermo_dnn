@@ -44,12 +44,12 @@ def save_checkpoint(state, filename='checkpoint'):
 if __name__ == '__main__':
 
     max_ckpt_save_num = 10
-    net = ThermoNet(18,64,16,'linear').cuda()
+    net = ThermoNet(18,64,16,'dense').cuda()
     optimizer = optim.Adam(net.parameters(), lr=0.01)
     ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
     if len(ckpt_list) > 0:
         ckpt_list.sort(key=os.path.getmtime)
-        checkpoint = torch.load(ckpt_list[-2])
+        checkpoint = torch.load(ckpt_list[-1])
         net.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         global_train_l = checkpoint['loss']
@@ -62,10 +62,9 @@ if __name__ == '__main__':
         for params in net.parameters():
             init.normal_(params, mean=0, std=0.05)
         global_train_l = sys.maxsize
-    train_iter = Data.DataLoader(THERMO('data/',True), 3995, shuffle=True,pin_memory=True)
+    train_iter = Data.DataLoader(THERMO('data/','rescale'), 3995, shuffle=True,pin_memory=True)
     print(global_train_l)
     for param_group in optimizer.param_groups:
-        param_group['lr']=0.000001
         print("learning rate",param_group['lr'])
     loss =nn.MSELoss()
 
