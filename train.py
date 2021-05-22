@@ -1,122 +1,103 @@
-from torch.nn import init
-from model import ThermoNet
-import datetime
-import torch
-import numpy as np
-from torch import nn
-from torch.nn import functional as F
-import torch.optim as optim
-import torch.utils.data as Data
-from dataset import THERMO
-from tqdm import tqdm
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
-import math
+import gzip
+import torch.utils.data as data
 import os
-import sys
-import glob
-def checkpoint_state(model=None, optimizer=None, epoch=None,loss=None):
-    optim_state = optimizer.state_dict() if optimizer is not None else None
-    if model is not None:
-        if isinstance(model, torch.nn.parallel.DistributedDataParallel):
-            model_state = model_state_to_cpu(model.module.state_dict())
-        else:
-            model_state = model.state_dict()
-    else:
-        model_state = None
+import os.path as osp
+import random
+import numpy as np
+import torch
+class THERMO(data.Dataset):
+    def __init__(self,root,use_norm):
+        self.root = root
+        self.use_norm=use_norm
+        self._cache = os.path.join(self.root, "thermo_cache.npy")
+        self.dict = {"CH":0,
+                    "CH2":1,
+                    "CH2O":2,
+                    "CH3":3,
+                    "CH4":4,
+                    "CO":5,
+                    "CO2":6,
+                    "H":7,
+                    "H2":8,
+                    "H2O":9,
+                    "H2O2":10,
+                    "HCO":11,
+                    "HO2":12,
+                    "N2":13,
+                    "O":14,
+                    "O2":15,
+                    "OH":16,
+                    "T":17,
+                    "RR.CH":18,
+                    "RR.CH2":19,
+                    "RR.CH2O":20,
+                    "RR.CH3":21,
+                    "RR.CH4":22,
+                    "RR.CO":23,
+                    "RR.CO2":24,
+                    "RR.H":25,
+                    "RR.H2":26,
+                    "RR.H2O":27,
+                    "RR.H2O2":28,
+                    "RR.HCO":29,
+                    "RR.HO2":30,
+                    "RR.O":31,
+                    "RR.O2":32,
+                    "RR.OH":33}
+        if not os.path.isfile(self._cache):
+            sumarray = []
+            for sublist in sorted(os.listdir(self.root)):
+                subarray = [np.zeros(4000).reshape(-1, 1) for _ in range(34)]
+                # if sublist=="thermo_cache.npy":
+                if sublist not in ['0.5']:
+                    continue
+                print("processing",sublist)
+                for file in os.listdir(os.path.join(self.root,sublist)):
+                    nparray = np.array([])
+                    with open(osp.join(self.root,sublist,file),'rb') as f:
+                        for n,line in enumerate(f):
+                            if 23 <= n <= 4022:
+                                nparray = np.append(nparray,float(line[:-1]))
+                    subarray[self.dict[file]] = nparray.reshape(-1,1)
+                subarray = np.hstack(subarray)
+                sumarray.append(subarray)
+            sumarray = np.vstack(sumarray)
+            np.save(self._cache,sumarray)
 
 
 
-    return {'epoch': epoch, 'model_state': model_state, 'optimizer_state': optim_state,'loss':loss}
-def model_state_to_cpu(model_state):
-    model_state_cpu = type(model_state)()  # ordered dict
-    for key, val in model_state.items():
-        model_state_cpu[key] = val.cpu()
-    return model_state_cpu
-def save_checkpoint(state, filename='checkpoint'):
-    if False and 'optimizer_state' in state:
-        optimizer_state = state['optimizer_state']
-        state.pop('optimizer_state', None)
-        optimizer_filename = '{}_optim.pth'.format(filename)
-        torch.save({'optimizer_state': optimizer_state}, optimizer_filename)
+        self._lmdb_file = np.load(self._cache)
+        self._lmdb_file = np.unique(self._lmdb_file,axis=0)
+        print(self._lmdb_file.shape)
+        if self.use_norm=='stand':
+            self.summean = self._lmdb_file.mean(axis=0, keepdims=True)
+            self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
+            self.mask = (self.sumstd!=0.).squeeze()
+            self._lmdb_file[:,self.mask] = (self._lmdb_file[:,self.mask] - self.summean[:,self.mask]) / self.sumstd[:,self.mask]
+        elif self.use_norm=='rescale':
+            self.summin = self._lmdb_file.min(axis=0, keepdims=True)
+            self.summax = self._lmdb_file.max(axis=0, keepdims=True)
+            self.mask = ((self.summin-self.summax) != 0.).squeeze()
+            self._lmdb_file[:, self.mask] = (self._lmdb_file[:, self.mask] - self.summin[:, self.mask]) / (self.summax[:, self.mask]-self.summin[:, self.mask])
 
-    filename = '{}.pth'.format(filename)
-    torch.save(state, filename)
+    def __getitem__(self, index):
+        if self._lmdb_file is None:
+            self._lmdb_file = np.load(self._cache)
+            if self.use_norm:
+                self.summean = self._lmdb_file.mean(axis=0, keepdims=True)
+                self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
+                mask = (self.sumstd != 0.).squeeze()
+                self._lmdb_file[:, mask] = (self._lmdb_file[:, mask] - self.summean[:, mask]) / self.sumstd[:, mask]
+
+        slice = self._lmdb_file[index,:]
+        input, output = slice[:18],slice[18:]
+        input = torch.tensor(input,dtype=torch.float32)
+        output = torch.tensor(output,dtype=torch.float32)
+        return input.unsqueeze(-1), output
+    def __len__(self):
+        return self._lmdb_file.shape[0]
 if __name__ == '__main__':
-
-    max_ckpt_save_num = 10
-    net = ThermoNet(18,64,16,'linear').cuda()
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
-    ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
-    if len(ckpt_list) > 0:
-        ckpt_list.sort(key=os.path.getmtime)
-        checkpoint = torch.load(ckpt_list[-2])
-        net.load_state_dict(checkpoint['model_state'])
-        optimizer.load_state_dict(checkpoint['optimizer_state'])
-        global_train_l = checkpoint['loss']
-    # if os.path.exists('model.pth'):
-    #     checkpoint = torch.load("model.pth")
-    #     net.load_state_dict(checkpoint['model_state_dict'])
-    #     optimizer.load_state_dict(checkpoint['optimizer'])
-    #     global_train_l = checkpoint['loss']
-    else:
-        for params in net.parameters():
-            init.normal_(params, mean=0, std=0.05)
-        global_train_l = sys.maxsize
-    train_iter = Data.DataLoader(THERMO('data/',True), 3995, shuffle=True,pin_memory=True)
-    print(global_train_l)
-    for param_group in optimizer.param_groups:
-        param_group['lr']=0.000001
-        print("learning rate",param_group['lr'])
-    loss =nn.MSELoss()
-
-
-    # scheduler = ReduceLROnPlateau(optimizer,patience=1,verbose=True,factor=0.5)
-    # scheduler = StepLR(optimizer,step_size=100,gamma=0.4,verbose=True)
-    def evaluate_accuracy(data_iter, net):
-        acc_sum, n = 0.0, 0
-        for X, y in data_iter:
-            acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
-            n += y.shape[0]
-        return acc_sum / n
-
-    num_epochs = 500000
-
-    for epoch in range(num_epochs):
-        train_l_sum , n = 0.0, 0
-        net.train()
-        for i,(X, y) in enumerate(train_iter):
-            X = X.cuda()
-            y = y.cuda()
-            y_hat = net(X)
-            l = loss(y_hat, y).sum()
-            # 梯度清零
-            optimizer.zero_grad()
-            l.backward()
-
-            optimizer.step()  # “softmax回归的简洁实现”一节将用到
-
-            train_l_sum += l.item()
-            n += y.shape[0]
-        if train_l_sum<global_train_l:
-            ckpt_list = glob.glob(str( 'checkpoint_epoch_*.pth'))
-            ckpt_list.sort(key=os.path.getmtime)
-
-            if ckpt_list.__len__() >= max_ckpt_save_num:
-                for cur_file_idx in range(0, len(ckpt_list) - max_ckpt_save_num + 1):
-                    os.remove(ckpt_list[cur_file_idx])
-
-            ckpt_name =  'checkpoint_epoch_%d' % epoch
-            save_checkpoint(
-                checkpoint_state(net, optimizer, epoch,train_l_sum), filename=ckpt_name,
-            )
-            print("save model",epoch+1,train_l_sum,datetime.datetime.now())
-            # torch.save({
-            #     'model_state_dict': net.state_dict(),
-            #     'loss': train_l_sum,
-            #     'optimizer': optimizer.state_dict(),
-            #     }, 'model.pth')
-            global_train_l = train_l_sum
-        # scheduler.step()
-        #print('epoch %d, loss %f'
-        #       % (epoch + 1, train_l_sum))
-
+    dataset = THERMO('data/','rescale')
+    input,output = random.choice(dataset)
+    print(input.shape,output,input)
+    print(len(dataset))
