@@ -53,11 +53,6 @@ if __name__ == '__main__':
         net.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         global_train_l = checkpoint['loss']
-    # if os.path.exists('model.pth'):
-    #     checkpoint = torch.load("model.pth")
-    #     net.load_state_dict(checkpoint['model_state_dict'])
-    #     optimizer.load_state_dict(checkpoint['optimizer'])
-    #     global_train_l = checkpoint['loss']
     else:
         for params in net.parameters():
             init.normal_(params, mean=0, std=0.05)
@@ -69,7 +64,7 @@ if __name__ == '__main__':
     loss =nn.MSELoss()
 
 
-    # scheduler = ReduceLROnPlateau(optimizer,patience=1,verbose=True,factor=0.5)
+    scheduler = ReduceLROnPlateau(optimizer,patience=300,verbose=True,factor=0.5)
     # scheduler = StepLR(optimizer,step_size=100,gamma=0.4,verbose=True)
     def evaluate_accuracy(data_iter, net):
         acc_sum, n = 0.0, 0
@@ -115,6 +110,6 @@ if __name__ == '__main__':
             #     'optimizer': optimizer.state_dict(),
             #     }, 'model.pth')
             global_train_l = train_l_sum
-        # scheduler.step()
+        scheduler.step(train_l_sum)
         #print('epoch %d, loss %f'
         #       % (epoch + 1, train_l_sum))
