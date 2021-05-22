@@ -17,11 +17,18 @@ from tqdm import tqdm
 from torchvision import transforms
 from PIL import Image
 
-norm = False
+import glob
+import os
+norm = 'rescale'
 testdata = pd.read_csv('testData.csv')
-net = ThermoNet(18,64,16,'linear')
-checkpoint = torch.load("model.pth")
-net.load_state_dict(checkpoint['model_state_dict'])
+net = ThermoNet(18,64,16,'dense')
+ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
+if len(ckpt_list) > 0:
+    ckpt_list.sort(key=os.path.getmtime)
+    checkpoint = torch.load(ckpt_list[-2])
+    net.load_state_dict(checkpoint['model_state'])
+    global_train_l = checkpoint['loss']
+    print(global_train_l)
 net.eval()
 data = THERMO('data/',norm)
 
@@ -58,16 +65,28 @@ input[:,9,:] = torch.from_numpy(np.array(H2O)).view(-1,1)
 input[:,15,:] = torch.from_numpy(np.array(O2)).view(-1,1)
 input[:,13,:] = torch.from_numpy(np.array(N2)).view(-1,1)
 input[:,17,:] = torch.from_numpy(np.array(T)).view(-1,1)
-if norm:
+if norm=='stand':
     mask = data.mask[:18]
     input = input.squeeze()
     print(input[:,mask].shape,mask.shape,data.summean[:,:18][:,mask].shape)
     input[:,mask] = (input[:,mask] - data.summean[:,:18][:,mask]) / data.sumstd[:,:18][:,mask]
     input = input.type(torch.float32)
+elif norm == 'rescale':
+    mask = data.mask[:18]
+    input = input.squeeze()
+    input[:, mask] = (input[:, mask] - data.summin[:, :18][:, mask]) / (
+                data.summax[:, :18][:, mask] - data.summin[:, :18][:, mask])
+    input = input.type(torch.float32)
 else:
     input = input.type(torch.float32).squeeze()
+input = input.unsqueeze(-1)
+print(input.shape)
 output = net(input)
-
+output = output.detach().numpy()
+if norm=='stand':
+    output = output*data.sumstd[:,18:]+data.summean[:,18:]
+elif norm=='rescale':
+    output = output*(data.summax[:,18:]-data.summin[:,18:])+data.summin[:,18:]
 # self.dict = {"CH": 0,
 #              "CH2": 1,
 #              "CH2O": 2,
@@ -104,10 +123,7 @@ output = net(input)
 #                     "RR.OH":15}
 
 plt.plot(Points0,RRCH4,label='original')
-if norm:
-    plt.plot(Points0,output[:,4].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
-else:
-    plt.plot(Points0,output[:,4].detach().numpy(),label='predict')
+plt.plot(Points0,output[:,4],label='predict')
 plt.title("CH4")
 plt.legend()
 plt.show()
@@ -122,10 +138,7 @@ plt.show()
 # plt.show()
 
 plt.plot(Points0,RRH2O,label='original')
-if norm:
-    plt.plot(Points0,output[:,9].detach().numpy()*data.sumstd[0][22]+data.summean[0][22],label='predict')
-else:
-    plt.plot(Points0,output[:,9].detach().numpy(),label='predict')
+plt.plot(Points0,output[:,9],label='predict')
 plt.title("H2O")
 plt.legend()
 plt.show()
