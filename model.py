@@ -94,7 +94,8 @@ class DenseBlock(nn.Module):
         return X
 
 def conv_block(in_channels, out_channels):
-    blk = nn.Sequential(nn.BatchNorm1d(in_channels),
+    blk = nn.Sequential(
+        # nn.BatchNorm1d(in_channels),
                         nn.ReLU(),
                         nn.Conv1d(in_channels, out_channels,kernel_size=1))
     return blk

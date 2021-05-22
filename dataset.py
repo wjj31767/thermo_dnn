@@ -69,12 +69,18 @@ class THERMO(data.Dataset):
         self._lmdb_file = np.load(self._cache)
         self._lmdb_file = np.unique(self._lmdb_file,axis=0)
         print(self._lmdb_file.shape)
-        if self.use_norm:
+        if self.use_norm=='stand':
             self.summean = self._lmdb_file.mean(axis=0, keepdims=True)
             self.sumstd = self._lmdb_file.std(axis=0, keepdims=True)
             self.mask = (self.sumstd!=0.).squeeze()
             self._lmdb_file[:,self.mask] = (self._lmdb_file[:,self.mask] - self.summean[:,self.mask]) / self.sumstd[:,self.mask]
 
+        elif self.use_norm == 'rescale':
+            self.summin = self._lmdb_file.min(axis=0, keepdims=True)
+            self.summax = self._lmdb_file.max(axis=0, keepdims=True)
+            self.mask = ((self.summin - self.summax) != 0.).squeeze()
+            self._lmdb_file[:, self.mask] = (self._lmdb_file[:, self.mask] - self.summin[:, self.mask]) / (
+                        self.summax[:, self.mask] - self.summin[:, self.mask])
     def __getitem__(self, index):
         if self._lmdb_file is None:
             self._lmdb_file = np.load(self._cache)
@@ -92,7 +98,7 @@ class THERMO(data.Dataset):
     def __len__(self):
         return self._lmdb_file.shape[0]
 if __name__ == '__main__':
-    dataset = THERMO('data/',True)
+    dataset = THERMO('data/','rescale')
     input,output = random.choice(dataset)
     print(input.shape,output,input)
     print(len(dataset))
