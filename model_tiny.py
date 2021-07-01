@@ -48,10 +48,28 @@ class ThermoNet(nn.Module):
                 i+=1
             else:
                 self.lin.add_module('linear'+str(i),nn.Linear(outdense_channels,out_channels))
+        elif mode == 'resnet':
+            self.res1 = resnet_block(in_channels,in_channels,2,True)
+            self.res2 = resnet_block(in_channels,hidden_channels,2)
+            self.res3 = resnet_block(hidden_channels,hidden_channels*2,2)
+            self.res4 = resnet_block(hidden_channels*2,hidden_channels*4,2)
+            self.res5 = resnet_block(hidden_channels*4,hidden_channels*8,2)
+            self.res6 = resnet_block(hidden_channels*8,hidden_channels*16,2)
+
+            self.lin = nn.Sequential()
+            outdense_channels = hidden_channels*16
+            i = 0
+            while outdense_channels // 2 > out_channels:
+                self.lin.add_module('linear' + str(i), nn.Linear(outdense_channels, outdense_channels // 2))
+                outdense_channels //= 2
+                i += 1
+            else:
+                self.lin.add_module('linear' + str(i), nn.Linear(outdense_channels, out_channels))
         self.dropout = nn.Dropout(0.2)
     def forward(self, x):
+        x = x.squeeze()
+
         if self.mode == 'linear':
-            x = x.squeeze()
             x = F.leaky_relu(self.fc1(x))
             x = F.leaky_relu(self.fc2(x))
             x = F.leaky_relu(self.fc3(x))
@@ -65,13 +83,24 @@ class ThermoNet(nn.Module):
             x = F.leaky_relu(self.fc11(x))
             x = self.fc12(x)
         elif self.mode == 'dense':
-            x = x.squeeze()
             x = self.dense1(x)
             x = self.dense2(x)
             x = self.dense3(x)
             x = self.dense4(x)
             x = self.dense5(x)
             # x = self.dense6(x)
+            # x = self.dense7(x)
+            # x = self.dense8(x)
+            # x = self.dense9(x)
+
+            x = self.lin(x.squeeze())
+        elif self.mode == 'resnet':
+            x = self.res1(x)
+            x = self.res2(x)
+            x = self.res3(x)
+            x = self.res4(x)
+            x = self.res5(x)
+            x = self.res6(x)
             # x = self.dense7(x)
             # x = self.dense8(x)
             # x = self.dense9(x)
@@ -103,11 +132,39 @@ def conv_block(in_channels, out_channels):
 
 
 
+class Residual(nn.Module):  # 本类已保存在d2lzh_pytorch包中方便以后使用
+    def __init__(self, in_channels, out_channels, use_1x1conv=False, stride=1):
+        super(Residual, self).__init__()
+        self.conv1 = nn.Linear(in_channels, out_channels)
+        self.conv2 = nn.Linear(out_channels, out_channels)
+        if use_1x1conv:
+            self.conv3 = nn.Linear(in_channels, out_channels)
+        else:
+            self.conv3 = None
+
+    def forward(self, X):
+        Y = F.relu(self.conv1(X))
+        Y = self.conv2(Y)
+        if self.conv3:
+            X = self.conv3(X)
+        return F.relu(Y + X)
+
+def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
+    if first_block:
+        assert in_channels == out_channels # 第一个模块的通道数同输入通道数一致
+    blk = []
+    for i in range(num_residuals):
+        if i == 0 and not first_block:
+            blk.append(Residual(in_channels, out_channels, use_1x1conv=True, stride=2))
+        else:
+            blk.append(Residual(out_channels, out_channels))
+    return nn.Sequential(*blk)
+
 
 if __name__ == '__main__':
     # model = nn.BatchNorm1d(10)
     # X = torch.rand(4, 10,1)
     # print(model(X.squeeze()).shape)
     from torchsummary import summary
-    model = ThermoNet(18,64,16,mode = 'dense').cuda()
-    print(summary(model, (18, 1)))
+    model = ThermoNet(6,8,4,mode = 'resnet').cuda()
+    print(summary(model, (6, 1)))
