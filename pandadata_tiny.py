@@ -20,7 +20,7 @@ import glob
 import os
 norm = 'rescale'
 testdata = pd.read_csv('testData.csv')
-net = ThermoNet(18,64,16,'dense')
+net = ThermoNet(6,8,4,'dense')
 ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
 if len(ckpt_list) > 0:
     ckpt_list.sort(key=os.path.getmtime)
@@ -57,24 +57,24 @@ for i in range(testdata.shape[0]):
     # RRCO2.append(testdata['RR.CO2'][i])
     Points0.append(testdata['Points:0'][i])
 
-input = torch.zeros((testdata.shape[0],18,1),dtype=torch.float64)
-input[:,4,:] = torch.from_numpy(np.array(CH4)).view(-1,1)
-input[:,5,:] = torch.from_numpy(np.array(CO2)).view(-1,1)
-input[:,9,:] = torch.from_numpy(np.array(H2O)).view(-1,1)
-input[:,15,:] = torch.from_numpy(np.array(O2)).view(-1,1)
-input[:,13,:] = torch.from_numpy(np.array(N2)).view(-1,1)
-input[:,17,:] = torch.from_numpy(np.array(T)).view(-1,1)
+input = torch.zeros((testdata.shape[0],6,1),dtype=torch.float64)
+input[:,0,:] = torch.from_numpy(np.array(CH4)).view(-1,1)
+input[:,1,:] = torch.from_numpy(np.array(CO2)).view(-1,1)
+input[:,2,:] = torch.from_numpy(np.array(H2O)).view(-1,1)
+input[:,3,:] = torch.from_numpy(np.array(O2)).view(-1,1)
+input[:,4,:] = torch.from_numpy(np.array(N2)).view(-1,1)
+input[:,5,:] = torch.from_numpy(np.array(T)).view(-1,1)
 if norm=='stand':
-    mask = data.mask[:18]
+    mask = data.mask[:6]
     input = input.squeeze()
-    print(input[:,mask].shape,mask.shape,data.summean[:,:18][:,mask].shape)
-    input[:,mask] = (input[:,mask] - data.summean[:,:18][:,mask]) / data.sumstd[:,:18][:,mask]
+    print(input[:,mask].shape,mask.shape,data.summean[:,:6][:,mask].shape)
+    input[:,mask] = (input[:,mask] - data.summean[:,:6][:,mask]) / data.sumstd[:,:6][:,mask]
     input = input.type(torch.float32)
 elif norm == 'rescale':
-    mask = data.mask[:18]
+    mask = data.mask[:6]
     input = input.squeeze()
-    input[:, mask] = (input[:, mask] - data.summin[:, :18][:, mask]) / (
-                data.summax[:, :18][:, mask] - data.summin[:, :18][:, mask])
+    input[:, mask] = (input[:, mask] - data.summin[:, :6][:, mask]) / (
+                data.summax[:, :6][:, mask] - data.summin[:, :6][:, mask])
     input = input.type(torch.float32)
 else:
     input = input.type(torch.float32).squeeze()
@@ -83,9 +83,9 @@ print(input.shape)
 output = net(input)
 output = output.detach().numpy()
 if norm=='stand':
-    output = output*data.sumstd[:,18:]+data.summean[:,18:]
+    output = output*data.sumstd[:,6:]+data.summean[:,6:]
 elif norm=='rescale':
-    output = output*(data.summax[:,18:]-data.summin[:,18:])+data.summin[:,18:]
+    output = output*(data.summax[:,6:]-data.summin[:,6:])+data.summin[:,6:]
 # self.dict = {"CH": 0,
 #              "CH2": 1,
 #              "CH2O": 2,
@@ -122,7 +122,7 @@ elif norm=='rescale':
 #                     "RR.OH":15}
 
 plt.plot(Points0,RRCH4,label='original')
-plt.plot(Points0,output[:,4],label='predict')
+plt.plot(Points0,output[:,0],label='predict')
 plt.title("CH4")
 plt.legend()
 plt.show()
@@ -134,7 +134,7 @@ plt.show()
 # plt.show()
 
 plt.plot(Points0,RRH2O,label='original')
-plt.plot(Points0,output[:,9],label='predict')
+plt.plot(Points0,output[:,2],label='predict')
 plt.title("H2O")
 plt.legend()
 plt.show()

@@ -1,5 +1,5 @@
 from torch.nn import init
-from model import ThermoNet
+from model_tiny import ThermoNet
 import datetime
 import torch
 import numpy as np
@@ -7,7 +7,7 @@ from torch import nn
 from torch.nn import functional as F
 import torch.optim as optim
 import torch.utils.data as Data
-from dataset import THERMO
+from dataset_tiny import THERMO
 from tqdm import tqdm
 from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 import math
@@ -43,8 +43,8 @@ def save_checkpoint(state, filename='checkpoint'):
     torch.save(state, filename)
 if __name__ == '__main__':
 
-    max_ckpt_save_num = 10
-    net = ThermoNet(18,64,16,'dense').cuda()
+    max_ckpt_save_num = 4
+    net = ThermoNet(6,8,4,'dense').cuda()
     optimizer = optim.Adam(net.parameters(), lr=0.01)
     ckpt_list = glob.glob(str('*checkpoint_epoch_*.pth'))
     if len(ckpt_list) > 0:
