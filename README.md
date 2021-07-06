@@ -4,7 +4,7 @@
 
 1. run evaluate.py generate "model.pt"
 
-2. download torch https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.7.1%2Bcpu.zip
+2. download torch https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-1.7.1%2Bcpu.zip
 
 ```
 mkdir build
