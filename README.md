@@ -49,3 +49,8 @@ The dataset for pytorch is getting from normal counterFlowFlame2D's results.
 4. testData.csv is for testing, pandadata.py is for testing curve, something like following:
 
    ![image-20210421125517058](README.assets/image-20210421125517058.png)
+
+## TODO
+
+1. use more data in conterflow2D by make the writeInterval in controlblock smaller to get more data and see if that make the result works better.
+2. NNI([GitHub - microsoft/nni: An open source AutoML toolkit for automate machine learning lifecycle, including feature engineering, neural architecture search, model compression and hyper-parameter tuning.](https://github.com/Microsoft/nni)) might be an universal solution for deep learning.
