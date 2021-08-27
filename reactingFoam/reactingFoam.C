@@ -53,44 +53,47 @@ torch::jit::script::Module module;
 
 int main(int argc, char *argv[])
 {
-    std::map<std::string,int> indict = {
-        {"CH",0},
-        {"CH2",1},
-        {"CH2O",2},
-        {"CH3",3},
-        {"CH4",4},
-        {"CO",5},
-        {"CO2",6},
-        {"H",7},
-        {"H2",8},
-        {"H2O",9},
-        {"H2O2",10},
-        {"HCO",11},
-        {"HO2",12},
-        {"N2",13},
-        {"O",14},
-        {"O2",15},
-        {"OH",16},
-        {"T",17},
+    std::map<std::string,int> dict_in = {
+        {"CH4",0},
+        {"CO2",1},
+        {"H2O",2},
+        {"N2",3},
+        {"O2",4},
+        {"T",5},
     };
-    std::map<std::string,int> outdict = {
-        {"CH",0},
-        {"CH2",1},
-        {"CH2O",2},
-        {"CH3",3},
-        {"CH4",4},
-        {"CO",5},
-        {"CO2",6},
-        {"H",7},
-        {"H2",8},
-        {"H2O",9},
-        {"H2O2",10},
-        {"HCO",11},
-        {"HO2",12},
-        {"O",13},
-        {"O2",14},
-        {"OH",15},
-
+    std::map<std::string,float> min_in = {
+        {"CH4",7.62566e-20},
+        {"CO2",4.39207e-15},
+        {"H2O",3.59575e-15},
+        {"N2",2.16310e-08},
+        {"O2",6.83314e-13},
+        {"T",2.93000e+02},
+    };
+    std::map<std::string,float> max_in = {
+        {"CH4",1.00000e+00},
+        {"CO2",1.43191e-01},
+        {"H2O",1.17229e-01},
+        {"N2",7.70000e-01},
+        {"O2",2.30000e-01},
+        {"T",2.01586e+03},
+    };
+    std::map<std::string,float> max_out = {
+        {"CH4",0.00000e+00},
+        {"CO2",9.01711e+00},
+        {"H2O",7.38223e+00},
+        {"O2",0.00000e+00},
+    };
+    std::map<std::string,float> min_out = {
+        {"CH4",-3.28697e+00},
+        {"CO2",-2.13528e-15},
+        {"H2O",-1.74813e-15},
+        {"O2",-1.31123e+01},
+    };
+    std::map<std::string,int> dict_out = {
+        {"CH4",0},
+        {"CO2",1},
+        {"H2O",2},
+        {"O2",3},
     };
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().

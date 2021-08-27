@@ -61,8 +61,8 @@ input = torch.zeros((testdata.shape[0],6,1),dtype=torch.float64)
 input[:,0,:] = torch.from_numpy(np.array(CH4)).view(-1,1)
 input[:,1,:] = torch.from_numpy(np.array(CO2)).view(-1,1)
 input[:,2,:] = torch.from_numpy(np.array(H2O)).view(-1,1)
-input[:,3,:] = torch.from_numpy(np.array(O2)).view(-1,1)
-input[:,4,:] = torch.from_numpy(np.array(N2)).view(-1,1)
+input[:,3,:] = torch.from_numpy(np.array(N2)).view(-1,1)
+input[:,4,:] = torch.from_numpy(np.array(O2)).view(-1,1)
 input[:,5,:] = torch.from_numpy(np.array(T)).view(-1,1)
 if norm=='stand':
     mask = data.mask[:6]

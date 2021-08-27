@@ -11,7 +11,7 @@ tmp<fv::convectionScheme<scalar>> mvConvection
 
 {
     // reaction->correct();
-    torch::Tensor featureTensor = torch::zeros({T.size(),18, 1});
+    torch::Tensor featureTensor = torch::zeros({T.size(),6, 1});
     
     // Execute the model and turn its output into a tensor.
     // std::vector<scalar> output(Y.size());
@@ -20,11 +20,11 @@ tmp<fv::convectionScheme<scalar>> mvConvection
     {
        forAll(Y, i)
        {
-           featureTensor[celli][indict[Y[i].name()]][0] = Y[i][celli];
+           featureTensor[celli][dict_in[Y[i].name()]][0] = (Y[i][celli]-min_in[Y[i].name()])/(max_in[Y[i].name()]-min_in[Y[i].name()]);
         
        }
                 
-       featureTensor[celli][indict[T.name()]][0] = T[celli];
+       featureTensor[celli][dict_in[T.name()]][0] = (T[celli]-min_in[T.name()])/(max_in[T.name()]-min_in[T.name()]);
     
         
                
@@ -41,7 +41,7 @@ tmp<fv::convectionScheme<scalar>> mvConvection
         {
             volScalarField::Internal& RRi = mesh.lookupObjectRef<volScalarField::Internal>("RR."+Y[i].name());
            
-            RRi[celli] = outputa[celli][outdict[Y[i].name()]];
+            RRi[celli] = outputa[celli][dict_out[Y[i].name()]]*(max_in[Y[i].name()]-min_in[Y[i].name()])+min_in[Y[i].name()];
         }
     }
         

@@ -60,7 +60,7 @@ if __name__ == '__main__':
     train_iter = Data.DataLoader(THERMO('data/','rescale'), 19472, shuffle=True,pin_memory=True)
     print(global_train_l)
     for param_group in optimizer.param_groups:
-        param_group['lr'] = 0.001
+        param_group['lr'] = 0.009
         print("learning rate",param_group['lr'])
     loss =nn.MSELoss()
 

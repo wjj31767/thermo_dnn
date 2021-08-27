@@ -6,7 +6,7 @@ import random
 import numpy as np
 import torch
 class THERMO(data.Dataset):
-    def __init__(self,root,use_norm):
+    def __init__(self,root,use_norm=None):
         self.root = root
         self.use_norm=use_norm
         self._cache = os.path.join(self.root, "thermo_cache.npy")
@@ -57,6 +57,7 @@ class THERMO(data.Dataset):
             self.summin = self._lmdb_file.min(axis=0, keepdims=True)
             self.summax = self._lmdb_file.max(axis=0, keepdims=True)
             self.mask = ((self.summin - self.summax) != 0.).squeeze()
+            print(self.summin,self.summax)
             self._lmdb_file[:, self.mask] = (self._lmdb_file[:, self.mask] - self.summin[:, self.mask]) / (
                         self.summax[:, self.mask] - self.summin[:, self.mask])
     def __getitem__(self, index):
@@ -78,5 +79,5 @@ class THERMO(data.Dataset):
 if __name__ == '__main__':
     dataset = THERMO('data/','rescale')
     input,output = random.choice(dataset)
-    print(input.shape,output,input)
-    print(len(dataset))
+    # print(input.shape,output,input)
+    # print(len(dataset))
